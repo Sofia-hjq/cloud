@@ -17,7 +17,7 @@
     </resultMap>
 
     <!--全部字段-->
-    <sql id="allColumn"> user_id, open_id, file_store_id, user_name,email,password,register_time, image_path,role</sql>
+    <sql id="allColumn"> user_id, open_id, file_store_id, user_name, email, password, register_time, image_path, role</sql>
     
     <!--添加语句的字段列表-->
     <sql id="insertColumn">
@@ -41,6 +41,9 @@
         </if>
         <if test="imagePath != null and imagePath != ''">
                 image_path,
+        </if>
+        <if test="role != null">
+                role,
         </if>
     </sql>
     
@@ -67,6 +70,9 @@
         <if test="imagePath != null and imagePath != ''">
                 #{imagePath},
         </if>
+        <if test="role != null">
+                #{role},
+        </if>
     </sql>
     
     <!--通用对User各个属性的值的非空判断-->
@@ -91,6 +97,9 @@
         </if>
         <if test="imagePath != null and imagePath != ''">
                 image_path = #{imagePath},
+        </if>
+        <if test="role != null">
+                role = #{role},
         </if>
     </sql>
     
@@ -181,7 +190,8 @@
         </where>
     </update>
     <select id="getUsers" resultType="com.moti.entity.UserToShow">
-        SELECT u.user_id,user_name,image_path,register_time,u.email,FLOOR(current_size/max_size*100) `current`,max_size,permission from user u
+        SELECT u.user_id, user_name, image_path, register_time, u.email, FLOOR(current_size/max_size*100) `current`, max_size, permission 
+        from user u
         INNER JOIN file_store f
         ON u.user_id = f.user_id
     </select>

@@ -248,6 +248,7 @@ public class SystemController extends BaseController {
     public String helpPage(Map<String, Object> map) {
         //获得统计信息
         FileStoreStatistics statistics = myFileService.getCountStatistics(loginUser.getFileStoreId());
+        statistics.setFileStore(fileStoreService.getFileStoreById(loginUser.getFileStoreId()));
         map.put("statistics", statistics);
         return "u-admin/help";
     }
