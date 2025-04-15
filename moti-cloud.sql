@@ -88,3 +88,8 @@ CREATE TABLE `user` (
   `role` int(11) DEFAULT '1' COMMENT '用户角色,0管理员，1普通用户',
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
+
+INSERT INTO file_store (file_store_id, user_id, current_size, max_size, permission) 
+VALUES (1, 1, 0, 5242880, 0);
+
+UPDATE user SET file_store_id = 1 WHERE user_id = 1;
