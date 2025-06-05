@@ -22,10 +22,14 @@ services:
     container_name: moti-ftp
     restart: always
     environment:
-      PUBLICHOST: "localhost"
-      FTP_USER_NAME: ftpuser # 请修改为您自己的FTP用户名
-      FTP_USER_PASS: ftppassword # 请修改为您自己的FTP密码
+      PUBLICHOST: "localhost" # 如果在外部访问，需修改为服务器公网IP
+      FTP_USER_NAME: ftpuser
+      FTP_USER_PASS: ftppassword
       FTP_USER_HOME: /home/ftpusers/ftpuser
+      ADDED_FLAGS: "--natmode --passive-port=30000:30009 --chmod=777"
+      FTP_PASSIVE_PORTS: 30000:30009
+      # 以下设置确保用户有权限创建目录和文件
+      PURE_FTPD_OPTS: "-j -l puredb:/etc/pure-ftpd/pureftpd.pdb -p 30000:30009 -P $PUBLICHOST -c 50 -C 2 -A -E -R -K -X -d"
     volumes:
       - ftp_data:/home/ftpusers
     ports:
@@ -47,11 +51,11 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/moti-cloud?serverTimezone=Hongkong&useAffectedRows=true&characterEncoding=utf8&useSSL=false
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=motipassword # 与MySQL密码保持一致
+      - SPRING_DATASOURCE_PASSWORD=motipassword
       - FTP_HOST=ftp
       - FTP_PORT=21
-      - FTP_USERNAME=ftpuser # 与FTP用户名保持一致
-      - FTP_PASSWORD=ftppassword # 与FTP密码保持一致
+      - FTP_USERNAME=ftpuser
+      - FTP_PASSWORD=ftppassword
       - MAIL_USERNAME=您的QQ邮箱 # 请修改为您自己的QQ邮箱
       - MAIL_PASSWORD=您的QQ邮箱密码 # 请修改为您自己的QQ邮箱密码
 

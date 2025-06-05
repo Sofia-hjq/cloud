@@ -4,6 +4,7 @@ import com.moti.entity.FileFolder;
 import com.moti.entity.FileStore;
 import com.moti.entity.MyFile;
 import com.moti.entity.TempFile;
+import com.moti.utils.FileSystemUtil;
 import com.moti.utils.FtpUtil;
 import com.moti.utils.LogUtils;
 import com.moti.utils.QRCodeUtil;
@@ -54,7 +55,7 @@ public class FileStoreController extends BaseController {
         String dateStr = format.format(new Date());
         String path = "temp/"+dateStr +"/"+UUID.randomUUID();
         try {
-            if (FtpUtil.uploadFile("/"+path, name, file.getInputStream())){
+            if (FileSystemUtil.uploadFile("/"+path, name, file.getInputStream())){
                 //上传成功
                 logger.info("临时文件上传成功!"+name);
                 String size = String.valueOf(file.getSize());
@@ -169,30 +170,51 @@ public class FileStoreController extends BaseController {
         }
         try {
             //提交到FTP服务器
-            boolean b = FtpUtil.uploadFile("/"+path, name + postfix, files.getInputStream());
+            logger.info("准备上传文件到FTP服务器: " + files.getOriginalFilename() + 
+                        ", 路径: " + path + ", 大小: " + size + "KB, 类型: " + type + postfix);
+            
+            boolean b = FileSystemUtil.uploadFile("/"+path, name + postfix, files.getInputStream());
             if (b){
                 //上传成功
                 logger.info("文件上传成功!"+files.getOriginalFilename());
-                //向数据库文件表写入数据
-                myFileService.addFileByFileStoreId(
-                        MyFile.builder()
-                              .myFileName(name).fileStoreId(loginUser.getFileStoreId()).myFilePath(path)
-                              .downloadTime(0).uploadTime(new Date()).parentFolderId(folderId).
-                              size(Integer.valueOf(size)).type(type).postfix(postfix).build());
-                //更新仓库表的当前大小
-                fileStoreService.addSize(store.getFileStoreId(),Integer.valueOf(size));
                 try {
-                    Thread.sleep(5000);
+                    //向数据库文件表写入数据
+                    logger.info("正在向数据库写入文件信息: " + name + postfix);
+                    MyFile myFile = MyFile.builder()
+                          .myFileName(name)
+                          .fileStoreId(loginUser.getFileStoreId())
+                          .myFilePath(path)
+                          .downloadTime(0)
+                          .uploadTime(new Date())
+                          .parentFolderId(folderId)
+                          .size(Integer.valueOf(size))
+                          .type(type)
+                          .postfix(postfix)
+                          .build();
+                          
+                    myFileService.addFileByFileStoreId(myFile);
+                    
+                    //更新仓库表的当前大小
+                    logger.info("正在更新用户存储空间使用量: " + size + "KB");
+                    fileStoreService.addSize(store.getFileStoreId(), Integer.valueOf(size));
+                    
                     map.put("code", 200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.info("文件处理完成: " + files.getOriginalFilename());
+                } catch (Exception e) {
+                    logger.error("文件上传成功但数据库操作失败: " + e.getMessage(), e);
+                    map.put("code", 505);
                 }
             }else{
-                logger.error("文件上传失败!"+files.getOriginalFilename());
+                logger.error("文件上传失败! " + files.getOriginalFilename() + 
+                          " (可能的原因: FTP连接问题或权限问题)");
                 map.put("code", 504);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("文件上传过程发生异常: " + e.getMessage(), e);
+            map.put("code", 506);
+        } catch (Exception e) {
+            logger.error("文件上传过程发生未知异常: " + e.getMessage(), e);
+            map.put("code", 507);
         }
         return map;
     }
@@ -222,7 +244,7 @@ public class FileStoreController extends BaseController {
             response.setContentType("multipart/form-data");
             // 文件名转码一下，不然会出现中文乱码
             response.setHeader("Content-Disposition", "attachment;fileName=" + URLEncoder.encode(fileName, "UTF-8"));
-            boolean flag = FtpUtil.downloadFile("/" + remotePath, fileName, os);
+            boolean flag = FileSystemUtil.downloadFile("/" + remotePath, fileName, os);
             if (flag) {
                 myFileService.updateFile(
                         MyFile.builder().myFileId(myFile.getMyFileId()).downloadTime(myFile.getDownloadTime() + 1).build());
@@ -250,7 +272,7 @@ public class FileStoreController extends BaseController {
         String remotePath = myFile.getMyFilePath();
         String fileName = myFile.getMyFileName()+myFile.getPostfix();
         //从FTP文件服务器上删除文件
-        boolean b = FtpUtil.deleteFile("/"+remotePath, fileName);
+        boolean b = FileSystemUtil.deleteFile("/"+remotePath, fileName);
         if (b){
             //删除成功,返回空间
             fileStoreService.subSize(myFile.getFileStoreId(),Integer.valueOf(myFile.getSize()));
@@ -291,7 +313,7 @@ public class FileStoreController extends BaseController {
         if (files.size()!=0){
             for (int i = 0; i < files.size(); i++) {
                 Integer fileId = files.get(i).getMyFileId();
-                boolean b = FtpUtil.deleteFile("/"+files.get(i).getMyFilePath(), files.get(i).getMyFileName() + files.get(i).getPostfix());
+                boolean b = FileSystemUtil.deleteFile("/"+files.get(i).getMyFilePath(), files.get(i).getMyFileName() + files.get(i).getPostfix());
                 if (b){
                     myFileService.deleteByFileId(fileId);
                     fileStoreService.subSize(folder.getFileStoreId(),Integer.valueOf(files.get(i).getSize()));
@@ -381,7 +403,7 @@ public class FileStoreController extends BaseController {
             String oldName = myFile.getMyFileName();
             String newName = file.getMyFileName();
             if (!oldName.equals(newName)){
-                boolean b = FtpUtil.reNameFile(myFile.getMyFilePath() + "/" + oldName+myFile.getPostfix(), myFile.getMyFilePath() + "/" + newName+myFile.getPostfix());
+                boolean b = FileSystemUtil.reNameFile(myFile.getMyFilePath() + "/" + oldName+myFile.getPostfix(), myFile.getMyFilePath() + "/" + newName+myFile.getPostfix());
                 if (b){
                     Integer integer = myFileService.updateFile(
                             MyFile.builder().myFileId(myFile.getMyFileId()).myFileName(newName).build());
@@ -498,7 +520,7 @@ public class FileStoreController extends BaseController {
             response.setContentType("multipart/form-data");
             // 文件名转码一下，不然会出现中文乱码
             response.setHeader("Content-Disposition", "attachment;fileName=" + fileNameTemp);
-            if (FtpUtil.downloadFile("/" + remotePath, fileName, os)) {
+            if (FileSystemUtil.downloadFile("/" + remotePath, fileName, os)) {
                 myFileService.updateFile(
                         MyFile.builder().myFileId(f).downloadTime(times + 1).build());
                 os.flush();
