@@ -40,5 +40,5 @@ jobs:
       run: |
         mvn sonar:sonar \
           -Dsonar.organization=sofia-hjq \
-          -Dsonar.projectKey=sofia-hjq_cloud \
+          -Dsonar.projectKey=Sofia-hjq_cloud \
           -Dsonar.host.url=https://sonarcloud.io 

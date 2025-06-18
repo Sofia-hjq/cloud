@@ -2,8 +2,8 @@
 
 ## 配置信息
 - **组织键 (Organization Key)**: `sofia-hjq`
-- **项目键 (Project Key)**: `sofia-hjq_cloud`
-- **SonarCloud Token**: `b9954cf62436a62b58c640f951b643b5e37c1c80`
+- **项目键 (Project Key)**: `Sofia-hjq_cloud`
+- **SonarCloud Token**: `e1ff75412f36034de655a6f18efdeba1db144b23`
 
 ## GitHub Secrets 配置
 
@@ -13,7 +13,7 @@
 2. 添加以下Repository secrets：
 
 ### 必需的Secrets：
-- **SONAR_TOKEN**: `b9954cf62436a62b58c640f951b643b5e37c1c80`
+- **SONAR_TOKEN**: `e1ff75412f36034de655a6f18efdeba1db144b23`
 
 ### 说明：
 - `GITHUB_TOKEN` 是自动提供的，无需手动配置
@@ -27,7 +27,7 @@
 项目配置文件已更新为：
 ```properties
 sonar.organization=sofia-hjq
-sonar.projectKey=sofia-hjq_cloud
+sonar.projectKey=Sofia-hjq_cloud
 sonar.projectName=Moti Cloud Project
 ```
 
@@ -41,7 +41,7 @@ sonar.projectName=Moti Cloud Project
 
 1. 配置好GitHub Secrets后，每次推送代码到指定分支时会自动触发SonarCloud分析
 2. 分析结果可在 [SonarCloud控制台](https://sonarcloud.io/projects) 查看
-3. 项目地址：https://sonarcloud.io/project/overview?id=sofia-hjq_cloud
+3. 项目地址：https://sonarcloud.io/project/overview?id=Sofia-hjq_cloud
 
 ## 注意事项
 
