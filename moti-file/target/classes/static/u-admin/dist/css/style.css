@@ -1494,6 +1494,47 @@ table tr:hover .table-links {
 .avatar-color-6 { background-color: #1abc9c; }
 .avatar-color-7 { background-color: #34495e; }
 .avatar-color-8 { background-color: #e67e22; }
+
+/* 侧边栏水平布局样式 */
+.sidebar-user-horizontal {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.sidebar-user-horizontal .sidebar-user-picture {
+	flex-shrink: 0;
+	float: none;
+	margin-right: 0;
+}
+
+.sidebar-user-horizontal .sidebar-user-details {
+	flex: 1;
+	min-width: 0;
+}
+
+.sidebar-user-horizontal .sidebar-user-details .user-name {
+	margin-top: 0;
+	margin-bottom: 4px;
+}
+
+/* 侧边栏专用头像样式 */
+.user-avatar-sidebar {
+	width: 36px;
+	height: 36px;
+	font-size: 14px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar-sidebar::before {
+	top: -3px;
+	left: -3px;
+	right: -3px;
+	bottom: -3px;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 /* end user avatar */
 
 /* chat */

@@ -38,14 +38,16 @@
             <a href="index">莫提网盘</a>
         </div>
         <div class="sidebar-user">
-            <div class="sidebar-user-picture">
-                <a><div class="user-avatar" th:class="${'user-avatar ' + session.loginUser.avatarColor}" th:text="${session.loginUser.avatarChar}">U</div></a>
-            </div>
-            <div class="sidebar-user-details">
-                <div class="user-name" th:text="${session.loginUser.userName}">莫提</div>
-                <div class="user-role">
-                    <p th:if="${session.loginUser.role == 1}">普通用户</p>
-                    <p th:if="${session.loginUser.role == 0}">管理员</p>
+            <div class="sidebar-user-horizontal">
+                <div class="sidebar-user-picture">
+                    <a><div class="user-avatar user-avatar-sidebar" th:class="${'user-avatar user-avatar-sidebar ' + session.loginUser.avatarColor}" th:text="${session.loginUser.avatarChar}">U</div></a>
+                </div>
+                <div class="sidebar-user-details">
+                    <div class="user-name" th:text="${session.loginUser.userName}">莫提</div>
+                    <div class="user-role">
+                        <p th:if="${session.loginUser.role == 1}">普通用户</p>
+                        <p th:if="${session.loginUser.role == 0}">管理员</p>
+                    </div>
                 </div>
             </div>
         </div>
