@@ -33,7 +33,7 @@ sonar.projectName=Moti Cloud Project
 
 ### 工作流文件
 - 位置: `.github/workflows/sonarcloud.yml`
-- 使用JDK 8 (匹配项目配置)
+- 使用JDK 17 (兼容SonarCloud最新版本)
 - 包含Maven依赖缓存
 - 支持代码覆盖率分析
 
