@@ -2,6 +2,8 @@ package com.moti.file.service;
 
 import com.moti.common.entity.MyFile;
 import com.moti.common.entity.FileStore;
+import com.moti.common.entity.FileStoreStatistics;
+import com.moti.common.entity.FileFolder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -69,4 +71,29 @@ public interface FileService {
      * 更新文件名
      */
     boolean updateFileName(MyFile file, Integer userId);
+    
+    /**
+     * 获取用户文件统计数据
+     */
+    FileStoreStatistics getUserFileStatistics(Integer userId);
+    
+    /**
+     * 创建文件夹
+     */
+    FileFolder createFolder(String folderName, Integer parentFolderId, Integer userId);
+    
+    /**
+     * 更新文件夹名称
+     */
+    boolean updateFolder(Integer folderId, String folderName, Integer userId);
+    
+    /**
+     * 删除文件夹
+     */
+    boolean deleteFolder(Integer folderId, Integer userId);
+    
+    /**
+     * 获取用户文件夹列表
+     */
+    List<FileFolder> getUserFolders(Integer userId, Integer parentFolderId);
 } 

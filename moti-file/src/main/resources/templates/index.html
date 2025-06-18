@@ -216,6 +216,25 @@
             $('#' + elementId).hide();
         }, 3000);
     }
+
+    // 添加键盘事件监听
+    $(document).ready(function() {
+        // 注册表单回车键支持
+        $('#registerForm').on('keypress', function(e) {
+            if (e.which === 13) { // 回车键
+                e.preventDefault();
+                doRegister();
+            }
+        });
+
+        // 登录表单回车键支持
+        $('#loginForm').on('keypress', function(e) {
+            if (e.which === 13) { // 回车键
+                e.preventDefault();
+                doLogin();
+            }
+        });
+    });
 </script>
 </body>
 </html>

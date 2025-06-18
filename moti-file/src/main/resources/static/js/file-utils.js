@@ -14,6 +14,38 @@ function getCurrentUser() {
     return JSON.parse(currentUser);
 }
 
+// 页面状态管理
+var pageState = {
+    isUploading: false,
+    hasUnsavedChanges: false
+};
+
+// beforeunload事件处理函数
+function beforeUnloadHandler(e) {
+    console.log('beforeUnloadHandler triggered, pageState:', pageState);
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+}
+
+// 设置页面状态
+function setPageState(key, value) {
+    console.log('setPageState:', key, '=', value);
+    pageState[key] = value;
+    updateBeforeUnload();
+}
+
+// 更新beforeunload事件处理
+function updateBeforeUnload() {
+    if (pageState.isUploading || pageState.hasUnsavedChanges) {
+        console.log('Adding beforeunload listener');
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+    } else {
+        console.log('Removing beforeunload listener');
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+    }
+}
+
 // 文件下载
 function downloadFile(fileId) {
     var permission = window.permission || 0; // 从页面获取权限
@@ -84,6 +116,9 @@ function uploadFile(formData, parentFolderId) {
     var user = getCurrentUser();
     if (!user) return;
     
+    // 设置上传开始状态
+    onUploadStart();
+    
     formData.append('userId', user.userId);
     if (parentFolderId) {
         formData.append('parentFolderId', parentFolderId);
@@ -96,6 +131,9 @@ function uploadFile(formData, parentFolderId) {
         processData: false,
         contentType: false,
         success: function(response) {
+            // 设置上传完成状态
+            onUploadComplete();
+            
             if (response.success) {
                 alert('上传成功！');
                 location.reload();
@@ -104,6 +142,8 @@ function uploadFile(formData, parentFolderId) {
             }
         },
         error: function() {
+            // 设置上传完成状态
+            onUploadComplete();
             alert('网络错误，上传失败！');
         }
     });
@@ -172,6 +212,80 @@ function getFileStore(userId, callback) {
         }
     });
 }
+
+// 文件上传开始
+function onUploadStart() {
+    setPageState('isUploading', true);
+}
+
+// 文件上传完成
+function onUploadComplete() {
+    setPageState('isUploading', false);
+}
+
+// 标记页面有未保存的更改
+function markUnsavedChanges() {
+    setPageState('hasUnsavedChanges', true);
+}
+
+// 清除未保存的更改标记
+function clearUnsavedChanges() {
+    setPageState('hasUnsavedChanges', false);
+}
+
+// 清除所有页面状态（用于页面跳转前）
+function clearAllPageStates() {
+    pageState.isUploading = false;
+    pageState.hasUnsavedChanges = false;
+    updateBeforeUnload();
+}
+
+// 页面初始化
+$(document).ready(function() {
+    // 监听表单变化
+    $('form input, form textarea, form select').on('change input', function() {
+        markUnsavedChanges();
+    });
+    
+    // 监听表单提交
+    $('form').on('submit', function() {
+        clearUnsavedChanges();
+    });
+    
+    // 监听所有链接点击（包括导航栏链接）
+    $(document).on('click', 'a[href]', function(e) {
+        var href = $(this).attr('href');
+        
+        // 忽略锚点链接和JavaScript链接
+        if (href === '#' || href.startsWith('javascript:')) {
+            return;
+        }
+        
+        // 如果有未保存的更改且不在上传状态，弹出确认对话框
+        if (pageState.hasUnsavedChanges && !pageState.isUploading) {
+            if (!confirm('您有未保存的更改，确定要离开此页面吗？')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        // 清除所有页面状态
+        clearAllPageStates();
+    });
+    
+    // 监听页面刷新和跳转
+    $(window).on('beforeunload', function() {
+        // 如果不是在上传状态，则清除所有状态
+        if (!pageState.isUploading) {
+            clearAllPageStates();
+        }
+    });
+    
+    // 监听页面卸载事件，确保状态完全清除
+    $(window).on('unload', function() {
+        clearAllPageStates();
+    });
+});
 
 // 为了兼容现有代码，保持原函数名
 window.download = downloadFile;

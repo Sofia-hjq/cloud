@@ -122,9 +122,7 @@
 			alert("可能因为你的违规操作，您暂时无法下载文件！");
 			return;
 		}
-		var location = window.location.href;
-		let strings = location.split("moti-cloud");
-		window.location.href = strings[0]+"moti-cloud/downloadFile?time="+new Date().getTime()+"&tip="+Math.random()*1000000+"&fId="+id;
+		window.location.href = "/file/download/" + id;
 	}
 </script>
 <script th:src="@{/plug-ins/context-menu/js/jquery.contextMenu.min.js}"></script>

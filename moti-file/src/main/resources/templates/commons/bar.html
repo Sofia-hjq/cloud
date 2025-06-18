@@ -39,7 +39,7 @@
         </div>
         <div class="sidebar-user">
             <div class="sidebar-user-picture">
-                <a><img style="width: 50px;height: 50px" alt="image" th:src="${session.loginUser.imagePath}" src="/u-admin/dist/img/avatar/avatar-1.jpeg"></a>
+                <a><div class="user-avatar" th:class="${'user-avatar ' + session.loginUser.avatarColor}" th:text="${session.loginUser.avatarChar}">U</div></a>
             </div>
             <div class="sidebar-user-details">
                 <div class="user-name" th:text="${session.loginUser.userName}">莫提</div>
@@ -112,7 +112,6 @@
 </div>
 <footer class="main-footer" id="footer">
     <div class="footer-left">
-        Copyright &copy; 2020 <div class="bullet"></div> 版权所有 莫提网盘 <div class="bullet"></div> 备案号: <a href="http://www.beian.miit.gov.cn/">冀ICP备19025674号-2</a>
     </div>
     <div class="footer-right"></div>
 </footer>

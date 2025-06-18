@@ -1443,6 +1443,59 @@ table tr:hover .table-links {
 }
 /* end avatar */
 
+/* user avatar */
+.user-avatar {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+	font-weight: bold;
+	color: #fff;
+	text-transform: uppercase;
+	border: 3px solid rgba(255, 255, 255, 0.3);
+	box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+	position: relative;
+}
+
+.user-avatar::before {
+	content: '';
+	position: absolute;
+	top: -5px;
+	left: -5px;
+	right: -5px;
+	bottom: -5px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 255, 255, 0.2);
+	pointer-events: none;
+}
+
+/* 小尺寸头像样式调整 */
+.user-avatar-small {
+	border: 2px solid rgba(255, 255, 255, 0.4);
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar-small::before {
+	top: -3px;
+	left: -3px;
+	right: -3px;
+	bottom: -3px;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.avatar-color-1 { background-color: #3498db; }
+.avatar-color-2 { background-color: #e74c3c; }
+.avatar-color-3 { background-color: #2ecc71; }
+.avatar-color-4 { background-color: #f39c12; }
+.avatar-color-5 { background-color: #9b59b6; }
+.avatar-color-6 { background-color: #1abc9c; }
+.avatar-color-7 { background-color: #34495e; }
+.avatar-color-8 { background-color: #e67e22; }
+/* end user avatar */
+
 /* chat */
 .card-chat .chat-content {
 	background-color: #f9f9f9!important;

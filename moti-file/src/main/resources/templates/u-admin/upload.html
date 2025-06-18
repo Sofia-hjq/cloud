@@ -179,6 +179,7 @@
 	}
 
 </script>
+<script th:src="@{/js/file-utils.js}"></script>
 <script src="/js/easyUploader.jq.js"></script>
 <script>
 	var uploader = easyUploader({
@@ -205,8 +206,8 @@
 		},
 		onChange: function(fileList) {
 			/* input选中时触发 */
-			document.body.onbeforeunload = function() {
-				window.event.returnValue = "确认离开？";
+			if (typeof onUploadStart === 'function') {
+				onUploadStart();
 			}
 		},
 		onRemove: function(removedFiles, files) {
@@ -230,12 +231,24 @@
 			if (code == 504){
 				alert("服务器出错了！");
 			}
-			document.body.onbeforeunload = function () {
-				window.event.returnValue = "确认离开？";
+			// 清除上传状态
+			if (typeof onUploadComplete === 'function') {
+				onUploadComplete();
+			}
+			// 清除所有页面状态，确保跳转时不会出现确认对话框
+			if (typeof clearAllPageStates === 'function') {
+				clearAllPageStates();
 			}
 		},
 		onError: function(err) {
 			console.log('onError', err);
+			// 上传出错时也需要清除状态
+			if (typeof onUploadComplete === 'function') {
+				onUploadComplete();
+			}
+			if (typeof clearAllPageStates === 'function') {
+				clearAllPageStates();
+			}
 		},
 	});
 </script>

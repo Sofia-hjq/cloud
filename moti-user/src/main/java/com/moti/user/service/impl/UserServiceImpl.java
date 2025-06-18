@@ -105,7 +105,7 @@ public class UserServiceImpl implements UserService {
             user = User.builder()
                     .userName("admin")
                     .password("admin123")
-                    .imagePath("/static/img/default-avatar.png")
+                    .imagePath(null) // 不再需要头像图片路径，使用首字符显示
                     .registerTime(new Date())
                     .role(0) // 管理员角色
                     .build();

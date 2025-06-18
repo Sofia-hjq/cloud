@@ -47,7 +47,7 @@
 										<tr th:each="user:${users}">
 											<td th:text="${user.userId}"></td>
 											<td>
-												<img alt="image" th:src="${user.imagePath}" class="rounded-circle" width="25" data-toggle="title" title="Wildan Ahdian">
+												<div class="user-avatar user-avatar-small" th:class="${'user-avatar user-avatar-small ' + user.avatarColor}" th:text="${user.avatarChar}" style="width: 25px; height: 25px; font-size: 12px;">U</div>
 											</td>
 											<td th:text="${user.userName}"></td>
 											<td class="align-middle">

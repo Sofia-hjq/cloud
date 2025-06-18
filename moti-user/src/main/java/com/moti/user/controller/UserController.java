@@ -41,7 +41,7 @@ public class UserController {
         
         // 用户名去空格
         user.setUserName(user.getUserName().trim());
-        user.setImagePath("/static/img/default-avatar.png");
+        user.setImagePath(null); // 不再需要头像图片路径，使用首字符显示
         user.setRegisterTime(new Date());
         user.setRole(1); // 普通用户
         

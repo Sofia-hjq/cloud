@@ -79,10 +79,7 @@ public class PageController {
                 // 登录成功，设置session并跳转
                 Map<String, Object> user = (Map<String, Object>) result.get("user");
                 
-                // 确保用户对象有所需的属性
-                if (user.get("imagePath") == null) {
-                    user.put("imagePath", "/static/img/default-avatar.png");
-                }
+                // 不再需要设置头像路径，使用用户名首字符
                 
                 request.getSession().setAttribute("currentUser", user);
                 return "redirect:/u-admin";
@@ -104,7 +101,7 @@ public class PageController {
     @GetMapping("/logout")
     public String logout(HttpServletRequest request) {
         request.getSession().invalidate();
-        return "redirect:/";
+        return "redirect:http://localhost:8888/";
     }
 
     /**
@@ -140,10 +137,7 @@ public class PageController {
                 return result;
             }
             
-            // 确保用户对象有所需的属性
-            if (userData.get("imagePath") == null) {
-                userData.put("imagePath", "/static/img/default-avatar.png");
-            }
+            // 不再需要设置头像路径，使用用户名首字符
             
             // 设置session
             request.getSession().setAttribute("currentUser", userData);
@@ -158,6 +152,13 @@ public class PageController {
         
         return result;
     }
-    
 
+    /**
+     * 兼容旧的下载URL路径
+     */
+    @GetMapping("/downloadFile")
+    public String downloadFile(@RequestParam("fId") Integer fileId) {
+        // 重定向到新的下载接口
+        return "redirect:/file/download/" + fileId;
+    }
 } 

@@ -54,4 +54,14 @@ public interface FileMapper {
             "WHERE fs.user_id = #{userId} AND f.my_file_name LIKE CONCAT('%', #{keyword}, '%')")
     List<MyFile> searchByKeyword(@Param("userId") Integer userId, 
                                 @Param("keyword") String keyword);
+    
+    @Select("SELECT COUNT(*) FROM my_file f " +
+            "JOIN file_store fs ON f.file_store_id = fs.file_store_id " +
+            "WHERE fs.user_id = #{userId}")
+    int countFilesByUserId(Integer userId);
+    
+    @Select("SELECT COUNT(*) FROM my_file f " +
+            "JOIN file_store fs ON f.file_store_id = fs.file_store_id " +
+            "WHERE fs.user_id = #{userId} AND f.type = #{type}")
+    int countFilesByUserIdAndType(@Param("userId") Integer userId, @Param("type") Integer type);
 } 

@@ -7,6 +7,7 @@ import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * (FileFolder)文件夹实体类
@@ -15,6 +16,7 @@ import lombok.Data;
  * @since 2020-02-25 17:19:04
  */
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 @Builder
 public class FileFolder implements Serializable {

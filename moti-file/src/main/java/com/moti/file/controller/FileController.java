@@ -1,7 +1,7 @@
 package com.moti.file.controller;
 
 import com.moti.common.entity.MyFile;
-import com.moti.common.entity.FileStore;
+import com.moti.common.entity.FileStoreStatistics;
 import com.moti.file.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +47,9 @@ public class FileController {
         // 设置session中的loginUser
         request.getSession().setAttribute("loginUser", loginUser);
         
-        // 创建统计数据
-        Map<String, Object> statistics = createDefaultStatistics();
+        // 获取真实统计数据
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
         return "u-admin/index";
@@ -58,32 +59,54 @@ public class FileController {
      * 所有文件页面
      */
     @GetMapping("/files")
-    public String files(Model model, HttpServletRequest request) {
+    public String files(Model model, HttpServletRequest request,
+                       @RequestParam(value = "fId", required = false) Integer folderId) {
         Map<String, Object> loginUser = getLoginUser(request);
         if (loginUser == null) {
             return "redirect:/";
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
-        // 获取用户所有文件列表（所有文件，不限制目录）
-        Integer userId = (Integer) loginUser.get("userId");
+        // 获取当前文件夹ID，默认为根目录(0)
+        Integer currentFolderId = (folderId != null) ? folderId : 0;
+        
+        // 获取当前文件夹下的文件列表
         try {
-            List<MyFile> files = fileService.getAllUserFiles(userId); // 获取所有文件
+            List<MyFile> files = fileService.getUserFiles(userId, currentFolderId);
             model.addAttribute("files", files != null ? files : new java.util.ArrayList<>());
-            log.info("为用户{}加载了{}个文件", userId, files != null ? files.size() : 0);
+            log.info("为用户{}在文件夹{}中加载了{}个文件", userId, currentFolderId, files != null ? files.size() : 0);
         } catch (Exception e) {
             log.error("获取用户文件失败：{}", e.getMessage());
             model.addAttribute("files", new java.util.ArrayList<>());
         }
         
-        // 添加文件页面需要的模型属性
-        Map<String, Object> nowFolder = createDefaultFolder();
+        // 获取当前文件夹下的子文件夹列表
+        try {
+            List<com.moti.common.entity.FileFolder> folders = fileService.getUserFolders(userId, currentFolderId);
+            model.addAttribute("folders", folders != null ? folders : new java.util.ArrayList<>());
+            log.info("为用户{}在文件夹{}中加载了{}个子文件夹", userId, currentFolderId, folders != null ? folders.size() : 0);
+        } catch (Exception e) {
+            log.error("获取用户文件夹失败：{}", e.getMessage());
+            model.addAttribute("folders", new java.util.ArrayList<>());
+        }
+        
+        // 设置当前文件夹信息
+        Map<String, Object> nowFolder;
+        if (currentFolderId == 0) {
+            nowFolder = createDefaultFolder();
+        } else {
+            // 这里可以扩展获取具体文件夹信息的逻辑
+            nowFolder = createDefaultFolder();
+            nowFolder.put("fileFolderId", currentFolderId);
+            nowFolder.put("fileFolderName", "文件夹" + currentFolderId); // 临时名称，后续可以从数据库获取
+        }
+        
         model.addAttribute("nowFolder", nowFolder);
-        model.addAttribute("location", new java.util.ArrayList<>());
-        model.addAttribute("folders", new java.util.ArrayList<>());
+        model.addAttribute("location", new java.util.ArrayList<>()); // 面包屑导航，后续可以扩展
         model.addAttribute("permission", 1); // 默认权限
         
         return "u-admin/files";
@@ -93,21 +116,43 @@ public class FileController {
      * 上传文件页面
      */
     @GetMapping("/upload")
-    public String upload(Model model, HttpServletRequest request) {
+    public String upload(Model model, HttpServletRequest request,
+                        @RequestParam(value = "fId", required = false) Integer folderId) {
         Map<String, Object> loginUser = getLoginUser(request);
         if (loginUser == null) {
             return "redirect:/";
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
-        // 添加上传页面需要的模型属性
-        Map<String, Object> nowFolder = createDefaultFolder();
+        // 获取当前文件夹ID，默认为根目录(0)
+        Integer currentFolderId = (folderId != null) ? folderId : 0;
+        
+        // 获取当前文件夹下的子文件夹列表
+        try {
+            List<com.moti.common.entity.FileFolder> folders = fileService.getUserFolders(userId, currentFolderId);
+            model.addAttribute("folders", folders != null ? folders : new java.util.ArrayList<>());
+            log.info("上传页面：为用户{}在文件夹{}中加载了{}个子文件夹", userId, currentFolderId, folders != null ? folders.size() : 0);
+        } catch (Exception e) {
+            log.error("上传页面获取用户文件夹失败：{}", e.getMessage());
+            model.addAttribute("folders", new java.util.ArrayList<>());
+        }
+        
+        // 设置当前文件夹信息
+        Map<String, Object> nowFolder;
+        if (currentFolderId == 0) {
+            nowFolder = createDefaultFolder();
+        } else {
+            nowFolder = createDefaultFolder();
+            nowFolder.put("fileFolderId", currentFolderId);
+            nowFolder.put("fileFolderName", "文件夹" + currentFolderId);
+        }
+        
         model.addAttribute("nowFolder", nowFolder);
         model.addAttribute("location", new java.util.ArrayList<>());
-        model.addAttribute("folders", new java.util.ArrayList<>());
         
         return "u-admin/upload";
     }
@@ -123,11 +168,11 @@ public class FileController {
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
         // 获取用户的文档文件列表
-        Integer userId = (Integer) loginUser.get("userId");
         try {
             List<MyFile> files = fileService.getFilesByType(userId, 1); // 1-文档
             model.addAttribute("files", files != null ? files : new java.util.ArrayList<>());
@@ -140,7 +185,7 @@ public class FileController {
     }
 
     /**
-     * 图片文件页面
+     * 图像文件页面
      */
     @GetMapping("/image-files")
     public String imageFiles(Model model, HttpServletRequest request) {
@@ -150,16 +195,16 @@ public class FileController {
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
-        // 获取用户的图片文件列表
-        Integer userId = (Integer) loginUser.get("userId");
+        // 获取用户的图像文件列表
         try {
-            List<MyFile> files = fileService.getFilesByType(userId, 2); // 2-图片
+            List<MyFile> files = fileService.getFilesByType(userId, 2); // 2-图像
             model.addAttribute("files", files != null ? files : new java.util.ArrayList<>());
         } catch (Exception e) {
-            log.error("获取图片文件失败：{}", e.getMessage());
+            log.error("获取图像文件失败：{}", e.getMessage());
             model.addAttribute("files", new java.util.ArrayList<>());
         }
         
@@ -177,11 +222,11 @@ public class FileController {
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
         // 获取用户的视频文件列表
-        Integer userId = (Integer) loginUser.get("userId");
         try {
             List<MyFile> files = fileService.getFilesByType(userId, 3); // 3-视频
             model.addAttribute("files", files != null ? files : new java.util.ArrayList<>());
@@ -204,11 +249,11 @@ public class FileController {
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
         // 获取用户的音频文件列表
-        Integer userId = (Integer) loginUser.get("userId");
         try {
             List<MyFile> files = fileService.getFilesByType(userId, 4); // 4-音频
             model.addAttribute("files", files != null ? files : new java.util.ArrayList<>());
@@ -231,11 +276,11 @@ public class FileController {
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
         // 获取用户的其他文件列表
-        Integer userId = (Integer) loginUser.get("userId");
         try {
             List<MyFile> files = fileService.getFilesByType(userId, 5); // 5-其他
             model.addAttribute("files", files != null ? files : new java.util.ArrayList<>());
@@ -258,7 +303,8 @@ public class FileController {
         }
         
         request.getSession().setAttribute("loginUser", loginUser);
-        Map<String, Object> statistics = createDefaultStatistics();
+        Integer userId = (Integer) loginUser.get("userId");
+        Map<String, Object> statistics = getRealStatistics(userId);
         model.addAttribute("statistics", statistics);
         
         return "u-admin/help";
@@ -272,7 +318,42 @@ public class FileController {
     }
 
     /**
-     * 创建默认统计数据
+     * 获取真实统计数据
+     */
+    private Map<String, Object> getRealStatistics(Integer userId) {
+        try {
+            FileStoreStatistics stats = fileService.getUserFileStatistics(userId);
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("folderCount", stats.getFolderCount());
+            statistics.put("fileCount", stats.getFileCount());
+            statistics.put("doc", stats.getDoc());
+            statistics.put("image", stats.getImage());
+            statistics.put("video", stats.getVideo());
+            statistics.put("music", stats.getMusic());
+            statistics.put("other", stats.getOther());
+            
+            // 文件仓库信息
+            Map<String, Object> fileStore = new HashMap<>();
+            fileStore.put("currentSize", stats.getFileStore().getCurrentSize());
+            fileStore.put("maxSize", stats.getFileStore().getMaxSize());
+            statistics.put("fileStore", fileStore);
+            
+            log.info("用户{}统计数据：文件夹{}个，文件{}个，文档{}个，图像{}个，视频{}个，音频{}个，其他{}个", 
+                    userId, stats.getFolderCount(), stats.getFileCount(), 
+                    stats.getDoc(), stats.getImage(), stats.getVideo(), 
+                    stats.getMusic(), stats.getOther());
+            
+            return statistics;
+        } catch (Exception e) {
+            log.error("获取用户{}统计数据失败：{}", userId, e.getMessage());
+            // 返回默认统计数据
+            return createDefaultStatistics();
+        }
+    }
+    
+    /**
+     * 创建默认统计数据（作为兜底方案）
      */
     private Map<String, Object> createDefaultStatistics() {
         Map<String, Object> statistics = new HashMap<>();
@@ -352,7 +433,7 @@ public class FileController {
             } else {
                 // 检查具体的失败原因
                 try {
-                    FileStore fileStore = fileService.getUserFileStore(userId);
+                    com.moti.common.entity.FileStore fileStore = fileService.getUserFileStore(userId);
                     if (fileStore == null) {
                         // 尝试创建文件仓库
                         fileStore = fileService.createFileStore(userId);
@@ -397,5 +478,71 @@ public class FileController {
         }
         
         return result;
+    }
+    
+    /**
+     * 新建文件夹
+     */
+    @PostMapping("/addFolder")
+    public String addFolder(@RequestParam("fileFolderName") String folderName,
+                           @RequestParam("parentFolderId") Integer parentFolderId,
+                           HttpServletRequest request) {
+        Map<String, Object> loginUser = getLoginUser(request);
+        if (loginUser == null) {
+            return "redirect:/";
+        }
+        
+        Integer userId = (Integer) loginUser.get("userId");
+        
+        // 创建文件夹
+        com.moti.common.entity.FileFolder folder = fileService.createFolder(folderName, parentFolderId, userId);
+        
+        // 重定向回文件列表页面
+        if (parentFolderId != null && parentFolderId != 0) {
+            return "redirect:/u-admin/files?fId=" + parentFolderId;
+        } else {
+            return "redirect:/u-admin/files";
+        }
+    }
+    
+    /**
+     * 更新文件夹名称
+     */
+    @PostMapping("/updateFolder")
+    public String updateFolder(@RequestParam("fileFolderId") Integer folderId,
+                              @RequestParam("fileFolderName") String folderName,
+                              HttpServletRequest request) {
+        Map<String, Object> loginUser = getLoginUser(request);
+        if (loginUser == null) {
+            return "redirect:/";
+        }
+        
+        Integer userId = (Integer) loginUser.get("userId");
+        
+        // 更新文件夹
+        fileService.updateFolder(folderId, folderName, userId);
+        
+        // 重定向回文件列表页面
+        return "redirect:/u-admin/files";
+    }
+    
+    /**
+     * 删除文件夹
+     */
+    @GetMapping("/deleteFolder")
+    public String deleteFolder(@RequestParam("fId") Integer folderId,
+                              HttpServletRequest request) {
+        Map<String, Object> loginUser = getLoginUser(request);
+        if (loginUser == null) {
+            return "redirect:/";
+        }
+        
+        Integer userId = (Integer) loginUser.get("userId");
+        
+        // 删除文件夹
+        fileService.deleteFolder(folderId, userId);
+        
+        // 重定向回文件列表页面
+        return "redirect:/u-admin/files";
     }
 } 
