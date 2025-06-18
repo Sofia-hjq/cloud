@@ -1,64 +1,37 @@
+version: '3.8'
+
 services:
-  # MySQL数据库服务
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0
     container_name: moti-mysql
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: motipassword # 请修改为您自己的密码
-      MYSQL_DATABASE: moti-cloud
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: moti_cloud
+      MYSQL_USER: moti
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
       - ./moti-cloud.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "3306:3306"
-    command: 
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - moti-network
 
-  # FTP服务
-  ftp:
-    image: stilliard/pure-ftpd:hardened
-    container_name: moti-ftp
-    restart: always
-    environment:
-      PUBLICHOST: "localhost" # 如果在外部访问，需修改为服务器公网IP
-      FTP_USER_NAME: ftpuser
-      FTP_USER_PASS: ftppassword
-      FTP_USER_HOME: /home/ftpusers/ftpuser
-      ADDED_FLAGS: "--natmode --passive-port=30000:30009 --chmod=777"
-      FTP_PASSIVE_PORTS: 30000:30009
-      # 以下设置确保用户有权限创建目录和文件
-      PURE_FTPD_OPTS: "-j -l puredb:/etc/pure-ftpd/pureftpd.pdb -p 30000:30009 -P $PUBLICHOST -c 50 -C 2 -A -E -R -K -X -d"
+  redis:
+    image: redis:6.2-alpine
+    container_name: moti-redis
+    ports:
+      - "6379:6379"
     volumes:
-      - ftp_data:/home/ftpusers
-    ports:
-      - "21:21"
-      - "30000-30009:30000-30009"
-
-  # 莫提网盘应用
-  moti-cloud:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: moti-cloud
-    restart: always
-    depends_on:
-      - mysql
-      - ftp
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/moti-cloud?serverTimezone=Hongkong&useAffectedRows=true&characterEncoding=utf8&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=motipassword
-      - FTP_HOST=ftp
-      - FTP_PORT=21
-      - FTP_USERNAME=ftpuser
-      - FTP_PASSWORD=ftppassword
-      - MAIL_USERNAME=您的QQ邮箱 # 请修改为您自己的QQ邮箱
-      - MAIL_PASSWORD=您的QQ邮箱密码 # 请修改为您自己的QQ邮箱密码
+      - redis-data:/data
+    networks:
+      - moti-network
 
 volumes:
-  mysql_data:
-  ftp_data: 
+  mysql-data:
+  redis-data:
+
+networks:
+  moti-network:
+    driver: bridge 

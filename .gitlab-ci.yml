@@ -1,47 +1,41 @@
 # 不指定镜像，使用GitLab Runner默认环境
 
 stages:
-  - build
-  - test
-  - deploy
+  - sonar
 
-# 缓存配置
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+
 cache:
   paths:
+    - .m2/repository/
     - target/
 
-# 构建阶段
-build-job:
-  stage: build
-  script:
-    - echo "编译项目..."
-    - echo "构建完成！"
-  artifacts:
+# SonarQube代码质量检查
+sonarqube-check:
+  stage: sonar
+  image: maven:3.8.1-openjdk-8
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "${CI_JOB_NAME}"
     paths:
-      - target/
-    expire_in: 1 week
-
-# 测试阶段
-test-job:
-  stage: test
+      - .sonar/cache
   script:
-    - echo "运行测试..."
-    - echo "测试通过！"
-  dependencies:
-    - build-job
-
-# 部署阶段
-deploy-job:
-  stage: deploy
-  script:
-    - echo "准备部署应用..."
-    - echo "部署成功！"
-  dependencies:
-    - build-job
+    - mvn $MAVEN_CLI_OPTS clean compile test jacoco:report
+    - mvn sonar:sonar 
+        -Dsonar.host.url=$SONAR_HOST_URL 
+        -Dsonar.login=$SONAR_TOKEN
+        -Dsonar.projectKey=moti-cloud
+        -Dsonar.projectName="莫提网盘"
+        -Dsonar.sources=src/main
+        -Dsonar.tests=src/test
+        -Dsonar.java.binaries=target/classes
+        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  allow_failure: true
   only:
-    - master
-
-# 环境变量
-variables:
-  APP_VERSION: "1.0.0"
-  APP_NAME: "moti-cloud" 
+    - merge_requests
+    - main
+    - develop

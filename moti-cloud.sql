@@ -68,7 +68,7 @@ CREATE TABLE `temp_file` (
   `file_name` varchar(255) DEFAULT NULL COMMENT '文件名',
   `size` varchar(255) DEFAULT NULL COMMENT '文件大小',
   `upload_time` datetime DEFAULT NULL COMMENT '上传时间：4小时后删除',
-  `file_path` varchar(255) DEFAULT NULL COMMENT '文件在FTP上的存放路径',
+  `file_path` varchar(255) DEFAULT NULL COMMENT '文件在本地文件系统的存放路径',
   PRIMARY KEY (`file_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
 
@@ -81,7 +81,6 @@ CREATE TABLE `user` (
   `open_id` varchar(255) DEFAULT NULL COMMENT '用户的openid',
   `file_store_id` int(11) DEFAULT NULL COMMENT '文件仓库ID',
   `user_name` varchar(50) DEFAULT NULL COMMENT '用户名',
-  `email` varchar(50) DEFAULT '	0000@qq.com' COMMENT '用户邮箱',
   `password` varchar(20) DEFAULT NULL COMMENT '密码',
   `register_time` datetime DEFAULT NULL COMMENT '注册时间',
   `image_path` varchar(255) DEFAULT '' COMMENT '头像地址',
