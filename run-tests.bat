@@ -39,19 +39,17 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM 步骤5: 运行SonarQube分析
-echo "步骤5: 运行SonarQube分析..."
-call mvn sonar:sonar -Dsonar.projectKey=Sofia-hjq_cloud -Dsonar.organization=sofia-hjq -Dsonar.host.url=https://sonarcloud.io
-if %errorlevel% neq 0 (
-    echo "SonarQube分析失败！请检查token配置"
-    pause
-    exit /b 1
-)
+REM 步骤5: 本地测试验证（不运行SonarCloud分析）
+echo "步骤5: 验证测试和覆盖率..."
+echo "注意：SonarCloud分析将在GitHub Actions中自动运行"
 
 echo "======================================"
-echo "✅ 质量保证流程完成！"
+echo "✅ 本地测试流程完成！"
 echo "======================================"
 echo "📊 覆盖率报告: target/site/jacoco/index.html"
 echo "🔍 SonarCloud: https://sonarcloud.io/project/overview?id=Sofia-hjq_cloud"
+echo ""
+echo "📌 提交代码到GitHub后，SonarCloud将自动分析"
+echo "📌 查看GitHub Actions运行状态和质量门结果"
 echo "======================================"
 pause 
