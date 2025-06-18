@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: moti-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: moti_cloud
+      MYSQL_USER: moti
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./moti-cloud.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - moti-network
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: moti-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - moti-network
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  moti-network:
+    driver: bridge 

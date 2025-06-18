@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>莫提网盘-登录注册</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css'>
+
+<!--    <link rel='stylesheet' href='https://ajax.aspnetcdn.com/ajax/bootstrap/4.2.1/css/bootstrap.min.css'>-->
+
+    <link rel="stylesheet" href="u-admin/dist/modules/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/upload-file.css">
+</head>
+<body>
+<div class="container">
+    <div class="card-wrap">
+        <div class="card border-0 shadow card--welcome is-show" id="welcome">
+            <div class="card-body">
+                <h2 class="card-title"><i class="fa fa-cloud" aria-hidden="true"></i> 莫提网盘</h2>
+                <br>
+                <!--判断是否包含错误信息-->
+                <p style="color: red" th:text="${errorMsg}"></p>
+                <br th:if="${errorMsg == null}">
+                <div class="btn-wrap"><a class="btn btn-lg btn-register js-btn" data-target="register">注册</a><a
+                        class="btn btn-lg btn-login js-btn" data-target="login">登录</a></div>
+                <br>
+                <p>临时文件上传</p>
+                <p class="badge-wrap">
+                    <a title="上传临时文件" class="badge btn-upload js-btn btn-success" data-target="upload"><i class="fa fa-upload" aria-hidden="true"></i></a>
+                </p>
+            </div>
+        </div>
+        <div class="card border-0 shadow card--register" id="register">
+            <div class="card-body">
+                <h2 class="card-title">用户注册</h2>
+                <p/>
+                <p/>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>
+                            <input class="form-control userName" type="text" placeholder="用户名" required="required"
+                                   name="userName" autocomplete="off"
+                                   onkeyup="this.value=this.value.replace(/\s+/g,'')"/>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input class="form-control password" type="password" placeholder="密码" required="required"
+                                   name="password" autocomplete="off"
+                                   onkeyup="this.value=this.value.replace(/\s+/g,'')">
+                        </label>
+                    </div>
+                    <div id="registerError" style="color: red; display: none;"></div>
+                    <button class="btn btn-lg" type="button" onclick="doRegister()">注册</button>
+                </form>
+            </div>
+            <button class="btn btn-back js-btn" data-target="welcome"><i class="fas fa-angle-left"></i></button>
+        </div>
+        <div class="card border-0 shadow card--login" id="login">
+            <div class="card-body">
+                <h2 class="card-title">用户登录</h2>
+                <br><br>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>
+                            <input class="form-control" type="text" placeholder="用户名" name="userName"
+                                   required="required"
+                                   onkeyup="this.value=this.value.replace(/\s+/g,'')"/>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input class="form-control" type="password" placeholder="密码" required="required"
+                                   name="password" autocomplete="off"
+                                   onkeyup="this.value=this.value.replace(/\s+/g,'')"/>
+                        </label>
+                    </div>
+                    <div id="loginError" style="color: red; display: none;"></div>
+                    <button class="btn btn-lg" type="button" onclick="doLogin()">登录</button>
+                </form>
+                <br><br>
+            </div>
+            <button class="btn btn-back js-btn" data-target="welcome"><i class="fas fa-angle-left"></i></button>
+        </div>
+        <div class="card border-0 shadow card--upload" id="upload">
+            <div class="card-body">
+                <h2 class="card-title">临时文件</h2>
+                <br><p style="color: red">仅4小时有效</p><br>
+                <form id="tempFile" method="post" action="uploadTempFile" multiple="multiple" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>
+                            <input class="form-control" type="file" name="file" id="file"/>
+                            <input class="form-control" type="hidden" id="url" name="url"/>
+                        </label>
+                    </div>
+                    <button class="btn btn-lg btn-success" type="button" onclick="check()">上传</button>
+                </form>
+
+                <br><br>
+            </div>
+            <button class="btn btn-back js-btn" data-target="welcome"><i class="fas fa-angle-left"></i></button>
+        </div>
+    </div>
+</div>
+<script src="js/jquery-3.4.1.js"></script>
+<script src="js/login.js"></script>
+<script>
+    function check() {
+        if ($('#file').val() === "") {
+            alert("请选择文件！");
+            return;
+        }
+        var size = $("input[type=file]").get(0).files[0].size;
+        if (size > 10485760){
+            alert("临时文件最大可上传10MB！");
+            return;
+        }
+        var location = window.location.href;
+        let strings = location.split("moti-cloud");
+        $('#url').val(strings[0]+"moti-cloud");
+        $('#tempFile').submit();
+    }
+
+    var userNameReg = /^[\u4e00-\u9fa5\w]{1,6}$/;//用户名正则
+
+    // 用户注册
+    function doRegister() {
+        var userName = $('input[name="userName"]').val().trim();
+        var password = $('input[name="password"]').val().trim();
+        
+        if (!userName || !password) {
+            showError('registerError', '用户名和密码不能为空');
+            return;
+        }
+        
+        $.ajax({
+            url: '/user/register',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                userName: userName,
+                password: password
+            }),
+            success: function(response) {
+                if (response.success) {
+                    alert('注册成功！请登录。');
+                    // 切换到登录界面
+                    $('.js-btn[data-target="login"]').click();
+                } else {
+                    showError('registerError', response.message || '注册失败');
+                }
+            },
+            error: function() {
+                showError('registerError', '网络错误，请稍后重试');
+            }
+        });
+    }
+
+    // 用户登录
+    function doLogin() {
+        var userName = $('#loginForm input[name="userName"]').val().trim();
+        var password = $('#loginForm input[name="password"]').val().trim();
+        
+        if (!userName || !password) {
+            showError('loginError', '用户名和密码不能为空');
+            return;
+        }
+        
+        $.ajax({
+            url: '/user/login',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                userName: userName,
+                password: password
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // 登录成功，先设置session，再跳转
+                    sessionStorage.setItem('currentUser', JSON.stringify(response.user));
+                    
+                    // 调用后端API设置session
+                    $.ajax({
+                        url: '/api/set-session',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(response.user),
+                        success: function(sessionResponse) {
+                            if (sessionResponse.success) {
+                                // Session设置成功，跳转到文件管理页面
+                                window.location.href = '/u-admin';
+                            } else {
+                                showError('loginError', '登录状态设置失败');
+                            }
+                        },
+                        error: function() {
+                            showError('loginError', '登录状态设置失败，请重试');
+                        }
+                    });
+                } else {
+                    showError('loginError', response.message || '登录失败');
+                }
+            },
+            error: function() {
+                showError('loginError', '网络错误，请稍后重试');
+            }
+        });
+    }
+
+    // 显示错误信息
+    function showError(elementId, message) {
+        $('#' + elementId).text(message).show();
+        setTimeout(function() {
+            $('#' + elementId).hide();
+        }, 3000);
+    }
+</script>
+</body>
+</html>

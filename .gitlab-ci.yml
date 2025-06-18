@@ -1,0 +1,41 @@
+# 不指定镜像，使用GitLab Runner默认环境
+
+stages:
+  - sonar
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+
+cache:
+  paths:
+    - .m2/repository/
+    - target/
+
+# SonarQube代码质量检查
+sonarqube-check:
+  stage: sonar
+  image: maven:3.8.1-openjdk-8
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - mvn $MAVEN_CLI_OPTS clean compile test jacoco:report
+    - mvn sonar:sonar 
+        -Dsonar.host.url=$SONAR_HOST_URL 
+        -Dsonar.login=$SONAR_TOKEN
+        -Dsonar.projectKey=moti-cloud
+        -Dsonar.projectName="莫提网盘"
+        -Dsonar.sources=src/main
+        -Dsonar.tests=src/test
+        -Dsonar.java.binaries=target/classes
+        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
